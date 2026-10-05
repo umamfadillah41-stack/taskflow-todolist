@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow — Aplikasi To-Do List</title>
+  <style>
+    /* =========================================================
+       TaskFlow — CSS
+       ========================================================= */
+    :root {
+      --blue-50:  #eff6ff;
+      --blue-100: #dbeafe;
+      --blue-200: #bfdbfe;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --blue-800: #1e40af;
+
+      --bg:        #f1f5f9;
+      --surface:   #ffffff;
+      --text:      #0f172a;
+      --text-soft: #475569;
+      --muted:     #94a3b8;
+      --border:    #e2e8f0;
+
+      --green:      #16a34a;
+      --green-soft: #dcfce7;
+      --amber:      #f59e0b;
+      --amber-soft: #fef3c7;
+      --red:        #dc2626;
+      --red-soft:   #fee2e2;
+
+      --radius: 16px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06);
+      --shadow:    0 1px 3px rgba(15, 23, 42, .05), 0 10px 25px -12px rgba(15, 23, 42, .22);
+      --shadow-lg: 0 24px 50px -24px rgba(15, 23, 42, .40);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 60px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ---------- Tombol ---------- */
+    .btn {
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: transform .15s ease, background .2s ease, box-shadow .2s ease, color .2s ease;
+    }
+    .btn:active { transform: scale(.96); }
+
+    .btn-primary {
+      background: var(--blue-600);
+      color: #fff;
+      box-shadow: 0 8px 18px -8px rgba(37, 99, 235, .85);
+    }
+    .btn-primary:hover { background: var(--blue-700); }
+
+    .btn-white {
+      background: #fff;
+      color: var(--blue-700);
+      box-shadow: 0 8px 20px -10px rgba(0, 0, 0, .55);
+    }
+    .btn-white:hover { background: var(--blue-50); }
+
+    .btn-ghost {
+      background: #fff;
+      color: var(--text-soft);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      line-height: 1;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: background .2s, color .2s;
+    }
+    .icon-btn:hover { background: #f1f5f9; color: var(--text); }
+
+    /* ---------- Navbar ---------- */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: linear-gradient(135deg, var(--blue-700) 0%, var(--blue-500) 100%);
+      color: #fff;
+      box-shadow: 0 8px 28px -14px rgba(29, 78, 216, .95);
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      flex-shrink: 0;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .18);
+      border: 1px solid rgba(255, 255, 255, .28);
+      display: grid;
+      place-items: center;
+      color: #fff;
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .brand-text span {
+      display: block;
+      font-size: 12px;
+      opacity: .85;
+      margin-top: 1px;
+    }
+
+    .plus { font-size: 17px; font-weight: 700; line-height: 1; }
+
+    /* ---------- Container ---------- */
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 20px 0;
+    }
+
+    /* ---------- Dashboard ---------- */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+    .stat-icon {
+      width: 42px;
+      height: 42px;
+      flex-shrink: 0;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 19px;
+    }
+
+    .icon-blue   { background: var(--blue-100); }
+    .icon-amber  { background: var(--amber-soft); }
+    .icon-green  { background: var(--green-soft); }
+    .icon-indigo { background: #e0e7ff; }
+    .icon-red    { background: var(--red-soft); }
+
+    .stat-info { min-width: 0; }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--blue-700);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @keyframes bump {
+      0%   { transform: scale(1); }
+      45%  { transform: scale(1.22); }
+      100% { transform: scale(1); }
+    }
+    .stat-value.bump { animation: bump .35s ease; }
+
+    /* ---------- Toolbar ---------- */
+    .toolbar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1 1 240px;
+      min-width: 200px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      opacity: .6;
+      pointer-events: none;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 11px 14px 11px 38px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea,
+    select {
+      font: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      width: 100%;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--blue-500);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, .18);
+    }
+
+    textarea { resize: vertical; min-height: 74px; }
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 13px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    .toolbar select { flex: 0 1 170px; min-width: 140px; }
+    .toolbar .btn-ghost { flex: 0 0 auto; }
+
+    /* ---------- Section Daftar Tugas ---------- */
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .count-pill {
+      background: var(--blue-100);
+      color: var(--blue-700);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+
+    .task-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+      gap: 16px;
+    }
+
+    .task-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      animation: cardIn .38s cubic-bezier(.22, 1, .36, 1) both;
+      transition: transform .2s ease, box-shadow .2s ease, background .25s ease, opacity .25s ease;
+    }
+
+    .task-card::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 6px;
+      background: var(--accent, var(--blue-500));
+    }
+
+    .task-card.prio-tinggi { --accent: var(--red); }
+    .task-card.prio-sedang { --accent: var(--amber); }
+    .task-card.prio-rendah { --accent: var(--green); }
+
+    .task-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .task-card.no-anim { animation: none; }
+
+    .task-card.selesai {
+      background: #f8fafc;
+      opacity: .72;
+      border-style: dashed;
+    }
+    .task-card.selesai .card-title {
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      color: var(--muted);
+    }
+    .task-card.selesai::before { opacity: .35; }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(16px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes cardOut {
+      to { opacity: 0; transform: scale(.86) translateX(28px); }
+    }
+    .task-card.card-exit {
+      animation: cardOut .3s ease forwards;
+      pointer-events: none;
+    }
+
+    @keyframes cardPulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.035); box-shadow: 0 0 0 4px rgba(37, 99, 235, .18); }
+      100% { transform: scale(1); }
+    }
+    .task-card.card-pulse { animation: cardPulse .34s ease; }
+
+    .card-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding-right: 4px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 999px;
+      letter-spacing: .2px;
+      white-space: nowrap;
+    }
+
+    .badge-tinggi { background: var(--red-soft); color: #b91c1c; }
+    .badge-sedang { background: var(--amber-soft); color: #b45309; }
+    .badge-rendah { background: var(--green-soft); color: #15803d; }
+
+    .badge-kategori {
+      background: var(--blue-50);
+      color: var(--blue-700);
+      border: 1px solid var(--blue-100);
+    }
+
+    .badge-status-belum { background: #f1f5f9; color: var(--text-soft); }
+    .badge-status-selesai { background: var(--green-soft); color: #15803d; }
+
+    .card-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.35;
+      word-break: break-word;
+      color: var(--text);
+    }
+
+    .card-desc {
+      margin: 0;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--text-soft);
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .meta-date {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-soft);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    .meta-date.late  { background: var(--red-soft);   border-color: #fecaca; color: #b91c1c; }
+    .meta-date.today { background: var(--amber-soft); border-color: #fde68a; color: #b45309; }
+    .meta-date.soon  { background: var(--blue-50);    border-color: var(--blue-100); color: var(--blue-700); }
+
+    .chip {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .chip.late  { background: var(--red);   color: #fff; }
+    .chip.today { background: var(--amber); color: #fff; }
+    .chip.soon  { background: var(--blue-600); color: #fff; }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .card-actions .btn {
+      font-size: 12.5px;
+      padding: 7px 12px;
+      border-radius: 9px;
+      flex: 1 1 auto;
+    }
+
+    .btn-selesai {
+      background: var(--blue-50);
+      color: var(--blue-700);
+      border: 1px solid var(--blue-100);
+    }
+    .btn-selesai:hover { background: var(--blue-100); }
+
+    .btn-edit {
+      background: #fff;
+      color: var(--text-soft);
+      border: 1px solid var(--border);
+    }
+    .btn-edit:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+    .btn-hapus {
+      background: #fff;
+      color: var(--red);
+      border: 1px solid #fecaca;
+    }
+    .btn-hapus:hover { background: var(--red-soft); }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 24px;
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      animation: cardIn .4s ease both;
+    }
+
+    .empty-icon { font-size: 44px; margin-bottom: 12px; opacity: .8; }
+
+    .empty-state h3 {
+      margin: 0 0 6px;
+      font-size: 17px;
+      color: var(--text);
+    }
+
+    .empty-state p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 340px;
+      line-height: 1.6;
+    }
+
+    /* ---------- Modal ---------- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, .55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .25s ease, visibility .25s ease;
+    }
+
+    .modal-overlay.show { opacity: 1; visibility: visible; }
+
+    .modal {
+      background: #fff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(24px) scale(.95);
+      opacity: 0;
+      transition: transform .32s cubic-bezier(.34, 1.4, .64, 1), opacity .26s ease;
+    }
+
+    .modal-overlay.show .modal {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .modal-sm { max-width: 420px; }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .modal-body { padding: 20px 22px 22px; }
+
+    .confirm-text {
+      margin: 0;
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text-soft);
+    }
+    .confirm-text strong { color: var(--text); }
+
+    .form {
+      padding: 20px 22px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-soft);
+    }
+
+    .req { color: var(--red); }
+
+    .error-msg {
+      font-size: 12px;
+      color: var(--red);
+      min-height: 0;
+      font-weight: 600;
+    }
+
+    .field.invalid input {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, .13);
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .modal-body .form-actions { margin-top: 22px; }
+
+    /* ---------- Toast ---------- */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 26px;
+      z-index: 200;
+      transform: translate(-50%, 90px);
+      background: #0f172a;
+      color: #fff;
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 12px 22px;
+      border-radius: 999px;
+      box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .8);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform .34s cubic-bezier(.34, 1.4, .64, 1), opacity .3s ease;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 720px) {
+      .container { padding: 18px 14px 0; }
+      .nav-inner { padding: 12px 14px; }
+      .brand-text h1 { font-size: 18px; }
+      .brand-text span { display: none; }
+      .brand-icon { width: 38px; height: 38px; }
+      .btn-white { padding: 9px 13px; font-size: 13px; }
+
+      .dashboard { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .stat-card { padding: 12px; gap: 10px; }
+      .stat-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
+      .stat-value { font-size: 20px; }
+      .stat-label { font-size: 11px; }
+
+      .toolbar { flex-direction: column; }
+      .toolbar select,
+      .toolbar .btn-ghost { flex: 1 1 auto; width: 100%; }
+      .search-box { flex: 1 1 auto; }
+
+      .task-list { grid-template-columns: 1fr; gap: 12px; }
+
+      .field-row { grid-template-columns: 1fr; gap: 15px; }
+
+      .form-actions { flex-direction: column-reverse; }
+      .form-actions .btn { width: 100%; }
+
+      .modal-body .form-actions { flex-direction: column-reverse; }
+    }
+
+    @media (max-width: 380px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= NAVBAR ================= -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+            <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>TaskFlow</h1>
+          <span>Kelola tugasmu dengan rapi</span>
+        </div>
+      </div>
+      <button class="btn btn-white" id="btnTambah" type="button">
+        <span class="plus">+</span> Tambah Tugas
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ================= DASHBOARD ================= -->
+    <section class="dashboard" aria-label="Ringkasan tugas">
+      <div class="stat-card">
+        <div class="stat-icon icon-blue">📋</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-label">Total Tugas</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-amber">⏳</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statBelum">0</div>
+          <div class="stat-label">Belum Selesai</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-green">✅</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statSelesai">0</div>
+          <div class="stat-label">Selesai</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-indigo">📅</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statHariIni">0</div>
+          <div class="stat-label">Deadline Hari Ini</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-red">⚠️</div>
+        <div class="stat-info">
+          <div class="stat-value" id="statTerlambat">0</div>
+          <div class="stat-label">Terlambat</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TOOLBAR / FILTER ================= -->
+    <section class="toolbar" aria-label="Filter dan pencarian">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Cari nama tugas..." autocomplete="off" />
+      </div>
+
+      <select id="filterStatus" aria-label="Filter status">
+        <option value="semua">Semua Status</option>
+        <option value="belum">Belum Selesai</option>
+        <option value="selesai">Selesai</option>
+        <option value="terlambat">Terlambat</option>
+      </select>
+
+      <select id="filterPrioritas" aria-label="Filter prioritas">
+        <option value="semua">Semua Prioritas</option>
+        <option value="tinggi">🔴 Tinggi</option>
+        <option value="sedang">🟡 Sedang</option>
+        <option value="rendah">🟢 Rendah</option>
+      </select>
+
+      <select id="filterKategori" aria-label="Filter kategori">
+        <option value="semua">Semua Kategori</option>
+        <option value="Sekolah">Sekolah</option>
+        <option value="Kuliah">Kuliah</option>
+        <option value="Pribadi">Pribadi</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+
+      <button class="btn btn-ghost" id="btnReset" type="button">↺ Reset</button>
+    </section>
+
+    <!-- ================= DAFTAR TUGAS ================= -->
+    <section class="task-section">
+      <div class="section-head">
+        <h2>Daftar Tugas</h2>
+        <span class="count-pill" id="jumlahTampil">0 tugas</span>
+      </div>
+
+      <div class="task-list" id="taskList"></div>
+
+      <div class="empty-state hidden" id="emptyState">
+        <div class="empty-icon">🗂️</div>
+        <h3 id="emptyTitle">Belum ada tugas</h3>
+        <p id="emptyDesc">Klik tombol "Tambah Tugas" untuk membuat tugas pertamamu.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL FORM TAMBAH / EDIT ================= -->
+  <div class="modal-overlay" id="modalForm">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h3 id="modalTitle">Tambah Tugas</h3>
+        <button class="icon-btn" id="btnTutupForm" type="button" aria-label="Tutup">✕</button>
+      </div>
+
+      <form id="formTugas" class="form" novalidate>
+        <div class="field">
+          <label for="inputNama">Nama Tugas <span class="req">*</span></label>
+          <input type="text" id="inputNama" maxlength="80" placeholder="Contoh: Mengerjakan laporan praktikum" />
+          <small class="error-msg" id="errNama"></small>
+        </div>
+
+        <div class="field">
+          <label for="inputDeskripsi">Deskripsi</label>
+          <textarea id="inputDeskripsi" rows="3" maxlength="300" placeholder="Detail tugas (opsional)"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="inputDeadline">Deadline</label>
+            <input type="date" id="inputDeadline" />
+          </div>
+          <div class="field">
+            <label for="inputPrioritas">Prioritas</label>
+            <select id="inputPrioritas">
+              <option value="rendah">🟢 Rendah</option>
+              <option value="sedang" selected>🟡 Sedang</option>
+              <option value="tinggi">🔴 Tinggi</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="inputKategori">Kategori</label>
+          <select id="inputKategori">
+            <option value="Sekolah">Sekolah</option>
+            <option value="Kuliah">Kuliah</option>
+            <option value="Pribadi" selected>Pribadi</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="btnBatal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Tugas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL KONFIRMASI HAPUS ================= -->
+  <div class="modal-overlay" id="modalHapus">
+    <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="hapusTitle">
+      <div class="modal-head">
+        <h3 id="hapusTitle">Hapus Tugas?</h3>
+        <button class="icon-btn" id="btnTutupHapus" type="button" aria-label="Tutup">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-text">
+          Tugas <strong id="namaHapus">-</strong> akan dihapus permanen.
+          Tindakan ini tidak dapat dibatalkan.
+        </p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="btnBatalHapus">Batal</button>
+          <button type="button" class="btn btn-danger" id="btnKonfirmasiHapus">Ya, Hapus</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOAST ================= -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    /* =========================================================
+       TaskFlow — JavaScript (Vanilla)
+       ========================================================= */
+    (function () {
+      'use strict';
+
+      /* ---------- KONSTANTA & STATE ---------- */
+      const STORAGE_KEY = 'taskflow_tugas_v1';
+      const BOBOT_PRIORITAS = { tinggi: 0, sedang: 1, rendah: 2 };
+      const LABEL_PRIORITAS = { rendah: 'Rendah', sedang: 'Sedang', tinggi: 'Tinggi' };
+
+      let daftarTugas = [];
+      let editId = null;
+      let hapusId = null;
+      let toastTimer = null;
+
+      /* ---------- SHORTCUT DOM ---------- */
+      const $ = (id) => document.getElementById(id);
+
+      const dom = {
+        taskList: $('taskList'),
+        emptyState: $('emptyState'),
+        emptyTitle: $('emptyTitle'),
+        emptyDesc: $('emptyDesc'),
+        jumlahTampil: $('jumlahTampil'),
+
+        search: $('searchInput'),
+        fStatus: $('filterStatus'),
+        fPrioritas: $('filterPrioritas'),
+        fKategori: $('filterKategori'),
+        btnReset: $('btnReset'),
+        btnTambah: $('btnTambah'),
+
+        modalForm: $('modalForm'),
+        modalTitle: $('modalTitle'),
+        form: $('formTugas'),
+        inputNama: $('inputNama'),
+        inputDeskripsi: $('inputDeskripsi'),
+        inputDeadline: $('inputDeadline'),
+        inputPrioritas: $('inputPrioritas'),
+        inputKategori: $('inputKategori'),
+        errNama: $('errNama'),
+        btnTutupForm: $('btnTutupForm'),
+        btnBatal: $('btnBatal'),
+
+        modalHapus: $('modalHapus'),
+        namaHapus: $('namaHapus'),
+        btnTutupHapus: $('btnTutupHapus'),
+        btnBatalHapus: $('btnBatalHapus'),
+        btnKonfirmasiHapus: $('btnKonfirmasiHapus'),
+
+        toast: $('toast'),
+
+        statTotal: $('statTotal'),
+        statBelum: $('statBelum'),
+        statSelesai: $('statSelesai'),
+        statHariIni: $('statHariIni'),
+        statTerlambat: $('statTerlambat')
+      };
+
+      /* ---------- UTILITAS ---------- */
+      function escapeHtml(str) {
+        return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function buatId() {
+        return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      }
+
+      function keFormatInput(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function tanggalHariIni() {
+        return keFormatInput(new Date());
+      }
+
+      function parseTanggal(str) {
+        if (!str) return null;
+        const bagian = String(str).split('-').map(Number);
+        if (bagian.length !== 3 || bagian.some(isNaN)) return null;
+        const [y, m, d] = bagian;
+        const dt = new Date(y, m - 1, d);
+        return isNaN(dt.getTime()) ? null : dt;
+      }
+
+      function formatTanggalTampil(str) {
+        const d = parseTanggal(str);
+        if (!d) return '-';
+        try {
+          return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        } catch (e) {
+          return str;
+        }
+      }
+
+      function selisihHari(deadlineStr) {
+        const target = parseTanggal(deadlineStr);
+        if (!target) return null;
+        const hariIni = new Date();
+        hariIni.setHours(0, 0, 0, 0);
+        target.setHours(0, 0, 0, 0);
+        return Math.round((target - hariIni) / 86400000);
+      }
+
+      function labelDeadline(tugas) {
+        if (!tugas.deadline || tugas.selesai) return null;
+        const diff = selisihHari(tugas.deadline);
+        if (diff === null) return null;
+
+        if (diff < 0) {
+          const lewat = Math.abs(diff);
+          return { text: lewat === 1 ? 'Terlambat' : `Terlambat ${lewat} hari`, cls: 'late' };
+        }
+        if (diff === 0) return { text: 'Hari Ini', cls: 'today' };
+        if (diff === 1) return { text: 'Besok', cls: 'soon' };
+        return null;
+      }
+
+      /* ---------- LOCAL STORAGE ---------- */
+      function muatData() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          daftarTugas = Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          console.warn('Gagal memuat data dari LocalStorage:', e);
+          daftarTugas = [];
+        }
+      }
+
+      function simpanData() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(daftarTugas));
+        } catch (e) {
+          console.warn('Gagal menyimpan data ke LocalStorage:', e);
+          tampilkanToast('⚠️ Penyimpanan penuh / tidak tersedia');
+        }
+      }
+
+      /* ---------- TOAST ---------- */
+      function tampilkanToast(pesan) {
+        dom.toast.textContent = pesan;
+        dom.toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          dom.toast.classList.remove('show');
+        }, 2200);
+      }
+
+      /* ---------- FILTER, SORTIR, PENCARIAN ---------- */
+      function ambilDataTampil() {
+        const kata = dom.search.value.trim().toLowerCase();
+        const status = dom.fStatus.value;
+        const prioritas = dom.fPrioritas.value;
+        const kategori = dom.fKategori.value;
+        const hariIni = tanggalHariIni();
+
+        return daftarTugas
+          .filter(function (t) {
+            if (kata && !String(t.nama).toLowerCase().includes(kata)) return false;
+
+            if (status === 'belum' && t.selesai) return false;
+            if (status === 'selesai' && !t.selesai) return false;
+            if (status === 'terlambat') {
+              const terlambat = !t.selesai && t.deadline && t.deadline < hariIni;
+              if (!terlambat) return false;
+            }
+
+            if (prioritas !== 'semua' && t.prioritas !== prioritas) return false;
+            if (kategori !== 'semua' && t.kategori !== kategori) return false;
+
+            return true;
+          })
+          .sort(urutkanTugas);
+      }
+
+      function urutkanTugas(a, b) {
+        const da = a.deadline || '9999-12-31';
+        const db = b.deadline || '9999-12-31';
+
+        if (da !== db) return da < db ? -1 : 1;
+
+        const ba = BOBOT_PRIORITAS[a.prioritas] != null ? BOBOT_PRIORITAS[a.prioritas] : 9;
+        const bb = BOBOT_PRIORITAS[b.prioritas] != null ? BOBOT_PRIORITAS[b.prioritas] : 9;
+        if (ba !== bb) return ba - bb;
+
+        return (b.dibuat || 0) - (a.dibuat || 0);
+      }
+
+      /* ---------- RENDER ---------- */
+      function render(opsi) {
+        const animasi = !!(opsi && opsi.animasi);
+        const data = ambilDataTampil();
+
+        dom.taskList.innerHTML = '';
+
+        if (data.length === 0) {
+          dom.emptyState.classList.remove('hidden');
+          if (daftarTugas.length === 0) {
+            dom.emptyTitle.textContent = 'Belum ada tugas';
+            dom.emptyDesc.textContent = 'Klik tombol "Tambah Tugas" untuk membuat tugas pertamamu.';
+          } else {
+            dom.emptyTitle.textContent = 'Tidak ada tugas yang cocok';
+            dom.emptyDesc.textContent = 'Coba ubah kata kunci pencarian atau reset filter yang aktif.';
+          }
+        } else {
+          dom.emptyState.classList.add('hidden');
+        }
+
+        data.forEach(function (tugas, index) {
+          const kartu = buatKartu(tugas);
+          if (animasi) {
+            kartu.style.animationDelay = Math.min(index * 45, 350) + 'ms';
+          } else {
+            kartu.classList.add('no-anim');
+          }
+          dom.taskList.appendChild(kartu);
+        });
+
+        dom.jumlahTampil.textContent = data.length + ' tugas';
+        perbaruiDashboard();
+      }
+
+      function buatKartu(t) {
+        const kartu = document.createElement('article');
+        kartu.className = 'task-card prio-' + t.prioritas + (t.selesai ? ' selesai' : '');
+        kartu.dataset.id = t.id;
+
+        const info = labelDeadline(t);
+
+        let metaHtml = '';
+        if (t.deadline) {
+          metaHtml +=
+            '<span class="meta-date ' + (info ? info.cls : '') + '">📅 ' +
+            escapeHtml(formatTanggalTampil(t.deadline)) +
+            '</span>';
+          if (info) {
+            metaHtml += '<span class="chip ' + info.cls + '">' + escapeHtml(info.text) + '</span>';
+          }
+        } else {
+          metaHtml += '<span class="meta-date">🕓 Tanpa deadline</span>';
+        }
+
+        const labelPrio = LABEL_PRIORITAS[t.prioritas] || t.prioritas;
+        const ikonPrio = t.prioritas === 'tinggi' ? '🔴' : t.prioritas === 'sedang' ? '🟡' : '🟢';
+
+        kartu.innerHTML =
+          '<div class="card-top">' +
+            '<span class="badge badge-' + escapeHtml(t.prioritas) + '">' + ikonPrio + ' ' + escapeHtml(labelPrio) + '</span>' +
+            '<span class="badge badge-kategori">' + escapeHtml(t.kategori) + '</span>' +
+            '<span class="badge ' + (t.selesai ? 'badge-status-selesai' : 'badge-status-belum') + '">' +
+              (t.selesai ? '✓ Selesai' : 'Belum Selesai') +
+            '</span>' +
+          '</div>' +
+          '<h3 class="card-title">' + escapeHtml(t.nama) + '</h3>' +
+          (t.deskripsi ? '<p class="card-desc">' + escapeHtml(t.deskripsi) + '</p>' : '') +
+          '<div class="card-meta">' + metaHtml + '</div>' +
+          '<div class="card-actions">' +
+            '<button type="button" class="btn btn-selesai" data-action="toggle">' +
+              (t.selesai ? '↩ Batalkan' : '✓ Selesai') +
+            '</button>' +
+            '<button type="button" class="btn btn-edit" data-action="edit">✎ Edit</button>' +
+            '<button type="button" class="btn btn-hapus" data-action="hapus">🗑 Hapus</button>' +
+          '</div>';
+
+        return kartu;
+      }
+
+      /* ---------- DASHBOARD ---------- */
+      function perbaruiDashboard() {
+        const hariIni = tanggalHariIni();
+
+        let total = daftarTugas.length;
+        let selesai = 0;
+        let hariIniCount = 0;
+        let terlambat = 0;
+
+        daftarTugas.forEach(function (t) {
+          if (t.selesai) {
+            selesai++;
+          } else if (t.deadline) {
+            if (t.deadline === hariIni) hariIniCount++;
+            else if (t.deadline < hariIni) terlambat++;
+          }
+        });
+
+        setStat(dom.statTotal, total);
+        setStat(dom.statBelum, total - selesai);
+        setStat(dom.statSelesai, selesai);
+        setStat(dom.statHariIni, hariIniCount);
+        setStat(dom.statTerlambat, terlambat);
+      }
+
+      function setStat(elemen, nilai) {
+        const teks = String(nilai);
+        if (elemen.textContent === teks) return;
+        elemen.textContent = teks;
+        elemen.classList.remove('bump');
+        void elemen.offsetWidth;
+        elemen.classList.add('bump');
+      }
+
+      /* ---------- MODAL FORM ---------- */
+      function bukaForm(id) {
+        editId = id || null;
+
+        if (editId) {
+          const t = daftarTugas.find(function (x) { return x.id === editId; });
+          if (!t) { editId = null; return; }
+
+          dom.modalTitle.textContent = 'Edit Tugas';
+          dom.inputNama.value = t.nama || '';
+          dom.inputDeskripsi.value = t.deskripsi || '';
+          dom.inputDeadline.value = t.deadline || '';
+          dom.inputPrioritas.value = t.prioritas || 'sedang';
+          dom.inputKategori.value = t.kategori || 'Pribadi';
+        } else {
+          dom.modalTitle.textContent = 'Tambah Tugas';
+          dom.form.reset();
+          dom.inputPrioritas.value = 'sedang';
+          dom.inputKategori.value = 'Pribadi';
+        }
+
+        bersihkanError();
+        dom.modalForm.classList.add('show');
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(function () { dom.inputNama.focus(); }, 220);
+      }
+
+      function tutupForm() {
+        dom.modalForm.classList.remove('show');
+        document.body.style.overflow = '';
+        editId = null;
+        bersihkanError();
+      }
+
+      function bersihkanError() {
+        dom.errNama.textContent = '';
+        dom.inputNama.parentElement.classList.remove('invalid');
+      }
+
+      function tanganiSubmit(e) {
+        e.preventDefault();
+
+        const nama = dom.inputNama.value.trim();
+
+        if (!nama) {
+          dom.errNama.textContent = 'Nama tugas wajib diisi.';
+          dom.inputNama.parentElement.classList.add('invalid');
+          dom.inputNama.focus();
+          return;
+        }
+        bersihkanError();
+
+        const dataBaru = {
+          nama: nama,
+          deskripsi: dom.inputDeskripsi.value.trim(),
+          deadline: dom.inputDeadline.value || '',
+          prioritas: dom.inputPrioritas.value,
+          kategori: dom.inputKategori.value
+        };
+
+        if (editId) {
+          const t = daftarTugas.find(function (x) { return x.id === editId; });
+          if (t) {
+            Object.assign(t, dataBaru);
+            simpanData();
+            tutupForm();
+            render({ animasi: false });
+            tampilkanToast('✅ Tugas berhasil diperbarui');
+          } else {
+            tutupForm();
+          }
+        } else {
+          const tugasBaru = Object.assign({}, dataBaru, {
+            id: buatId(),
+            selesai: false,
+            dibuat: Date.now()
+          });
+
+          daftarTugas.push(tugasBaru);
+          simpanData();
+          tutupForm();
+
+          if (dom.search.value.trim() !== '') dom.search.value = '';
+
+          render({ animasi: true });
+          tampilkanToast('🎉 Tugas baru ditambahkan');
+
+          const kartuBaru = dom.taskList.querySelector('[data-id="' + tugasBaru.id + '"]');
+          if (kartuBaru) {
+            setTimeout(function () { kartuBaru.classList.add('card-pulse'); }, 380);
+            setTimeout(function () { kartuBaru.classList.remove('card-pulse'); }, 760);
+          }
+        }
+      }
+
+      /* ---------- AKSI TUGAS ---------- */
+      function toggleSelesai(id, kartu) {
+        const t = daftarTugas.find(function (x) { return x.id === id; });
+        if (!t) return;
+
+        if (kartu) kartu.classList.add('card-pulse');
+
+        setTimeout(function () {
+          t.selesai = !t.selesai;
+          t.selesaiPada = t.selesai ? Date.now() : null;
+          simpanData();
+          render({ animasi: false });
+          tampilkanToast(t.selesai ? '✔️ Tugas ditandai selesai' : '↩️ Tugas dikembalikan ke belum selesai');
+        }, 300);
+      }
+
+      function mintaKonfirmasiHapus(id) {
+        const t = daftarTugas.find(function (x) { return x.id === id; });
+        if (!t) return;
+
+        hapusId = id;
+        dom.namaHapus.textContent = '"' + t.nama + '"';
+        dom.modalHapus.classList.add('show');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function tutupKonfirmasiHapus() {
+        dom.modalHapus.classList.remove('show');
+        document.body.style.overflow = '';
+        hapusId = null;
+      }
+
+      function jalankanHapus() {
+        const id = hapusId;
+        if (!id) { tutupKonfirmasiHapus(); return; }
+
+        tutupKonfirmasiHapus();
+
+        const kartu = dom.taskList.querySelector('[data-id="' + id + '"]');
+        const hapusDariData = function () {
+          daftarTugas = daftarTugas.filter(function (t) { return t.id !== id; });
+          simpanData();
+          render({ animasi: false });
+          tampilkanToast('🗑️ Tugas berhasil dihapus');
+        };
+
+        if (kartu) {
+          kartu.classList.add('card-exit');
+          setTimeout(hapusDariData, 300);
+        } else {
+          hapusDariData();
+        }
+      }
+
+      /* ---------- EVENT LISTENER ---------- */
+      function pasangEvent() {
+        dom.btnTambah.addEventListener('click', function () { bukaForm(null); });
+
+        dom.btnTutupForm.addEventListener('click', tutupForm);
+        dom.btnBatal.addEventListener('click', tutupForm);
+        dom.form.addEventListener('submit', tanganiSubmit);
+
+        dom.inputNama.addEventListener('input', function () {
+          if (dom.inputNama.value.trim()) bersihkanError();
+        });
+
+        dom.btnTutupHapus.addEventListener('click', tutupKonfirmasiHapus);
+        dom.btnBatalHapus.addEventListener('click', tutupKonfirmasiHapus);
+        dom.btnKonfirmasiHapus.addEventListener('click', jalankanHapus);
+
+        dom.modalForm.addEventListener('click', function (e) {
+          if (e.target === dom.modalForm) tutupForm();
+        });
+        dom.modalHapus.addEventListener('click', function (e) {
+          if (e.target === dom.modalHapus) tutupKonfirmasiHapus();
+        });
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key !== 'Escape') return;
+          if (dom.modalHapus.classList.contains('show')) {
+            tutupKonfirmasiHapus();
+          } else if (dom.modalForm.classList.contains('show')) {
+            tutupForm();
+          }
+        });
+
+        dom.taskList.addEventListener('click', function (e) {
+          const tombol = e.target.closest('button[data-action]');
+          if (!tombol) return;
+
+          const kartu = tombol.closest('.task-card');
+          if (!kartu) return;
+
+          const id = kartu.dataset.id;
+          const aksi = tombol.dataset.action;
+
+          if (aksi === 'toggle') toggleSelesai(id, kartu);
+          else if (aksi === 'edit') bukaForm(id);
+          else if (aksi === 'hapus') mintaKonfirmasiHapus(id);
+        });
+
+        dom.search.addEventListener('input', function () {
+          render({ animasi: false });
+        });
+
+        [dom.fStatus, dom.fPrioritas, dom.fKategori].forEach(function (sel) {
+          sel.addEventListener('change', function () {
+            render({ animasi: true });
+          });
+        });
+
+        dom.btnReset.addEventListener('click', function () {
+          dom.search.value = '';
+          dom.fStatus.value = 'semua';
+          dom.fPrioritas.value = 'semua';
+          dom.fKategori.value = 'semua';
+          render({ animasi: true });
+          tampilkanToast('↺ Filter direset');
+        });
+      }
+
+      /* ---------- INISIALISASI ---------- */
+      function init() {
+        muatData();
+        pasangEvent();
+        render({ animasi: true });
+      }
+
+      init();
+
+    })();
+  </script>
+</body>
+</html>
